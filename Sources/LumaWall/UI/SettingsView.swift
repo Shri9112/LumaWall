@@ -5,6 +5,7 @@ import LumaWallKit
 struct SettingsView: View {
     @State private var powerManager = PowerManager.shared
     @State private var library = WallpaperLibrary.shared
+    @State private var loginManager = LoginItemManager.shared
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -221,6 +222,21 @@ struct SettingsView: View {
                 .font(.subheadline.weight(.semibold))
 
             Toggle(isOn: Binding(
+                get: { loginManager.isEnabled },
+                set: { val in
+                    try? loginManager.setLaunchAtLogin(enabled: val)
+                }
+            )) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Launch at Login")
+                        .font(.body)
+                    Text("Start LumaWall automatically when you log into your Mac (\(loginManager.statusDescription)).")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            Toggle(isOn: Binding(
                 get: { powerManager.settings.autoStartOnLaunch },
                 set: { val in
                     powerManager.settings.autoStartOnLaunch = val
@@ -228,7 +244,7 @@ struct SettingsView: View {
                 }
             )) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Start Wallpaper Automatically on App Launch")
+                    Text("Resume Wallpaper Automatically on Launch")
                         .font(.body)
                     Text("Restores last active desktop wallpaper when LumaWall starts.")
                         .font(.caption)
