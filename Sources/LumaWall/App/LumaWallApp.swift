@@ -9,10 +9,10 @@ struct LumaWallApp: App {
 
     var body: some Scene {
         WindowGroup("LumaWall", id: "main") {
-            VideoPreviewView()
+            ContentView()
         }
         .windowStyle(.titleBar)
         .windowToolbarStyle(.unified)
-        .defaultSize(width: 800, height: 560)
+        .defaultSize(width: 960, height: 640)
     }
 }

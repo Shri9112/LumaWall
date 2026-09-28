@@ -68,4 +68,35 @@ public struct WallpaperItem: Identifiable, Codable, Equatable, Sendable {
     public var formattedFileSize: String {
         ByteCountFormatter.string(fromByteCount: fileSize, countStyle: .file)
     }
+
+    public var isAvailable: Bool {
+        FileManager.default.fileExists(atPath: fileURL.path(percentEncoded: false))
+    }
+
+    public var thumbnailURL: URL? {
+        guard let thumbnailFileName else { return nil }
+        return ThumbnailGenerator.shared.cacheDirectory.appendingPathComponent(thumbnailFileName)
+    }
+
+    /// Resolves security-scoped bookmark if fileURL is not directly accessible
+    public mutating func resolveBookmarkIfNeeded() {
+        guard let bookmarkData else { return }
+        var isStale = false
+        if let resolvedURL = try? URL(
+            resolvingBookmarkData: bookmarkData,
+            options: .withSecurityScope,
+            relativeTo: nil,
+            bookmarkDataIsStale: &isStale
+        ) {
+            self.fileURL = resolvedURL
+            if isStale {
+                self.bookmarkData = try? resolvedURL.bookmarkData(
+                    options: .withSecurityScope,
+                    includingResourceValuesForKeys: nil,
+                    relativeTo: nil
+                )
+            }
+        }
+    }
 }
+

@@ -53,7 +53,7 @@ Before arriving at the chosen architecture, multiple macOS system mechanisms wer
 │               ┌─────────────────┴─────────────────┐                    │
 │               ▼                                   ▼                    │
 │   ┌──────────────────────────┐        ┌──────────────────────────┐     │
-│   │ WallpaperWindow (Screen 0)│       │ WallpaperWindow (Screen 1)│     │
+│   │WallpaperWindow (Screen 0)│        │WallpaperWindow (Screen 1)│     │
 │   │ • Level: desktopWindow   │        │ • Level: desktopWindow   │     │
 │   │ • ignoresMouseEvents=true│        │ • ignoresMouseEvents=true│     │
 │   │ • canJoinAllSpaces       │        │ • canJoinAllSpaces       │     │

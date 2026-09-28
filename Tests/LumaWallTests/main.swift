@@ -232,6 +232,103 @@ struct TestsMain {
         }
     }
 
+    static func testLibraryStorePersistence() {
+        let tempStoreURL = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("test_library_\(UUID().uuidString).json")
+        let store = LibraryStore(customStoreURL: tempStoreURL)
+        defer { store.deleteStore() }
+
+        // Test loading empty
+        let initialData = try? store.load()
+        TestRunner.assert(initialData?.wallpapers.isEmpty == true, "Empty store returns empty list")
+
+        // Test saving and reloading
+        let item1 = WallpaperItem(
+            name: "Hogwarts",
+            fileURL: URL(fileURLWithPath: "/Users/test/Movies/Hogwarts.mp4"),
+            duration: 60.0,
+            width: 3840,
+            height: 2160,
+            codec: "hevc",
+            fileSize: 50_000_000
+        )
+        let item2 = WallpaperItem(
+            name: "Spider-Man",
+            fileURL: URL(fileURLWithPath: "/Users/test/Movies/SpiderMan.mp4"),
+            duration: 90.0,
+            width: 1920,
+            height: 1080,
+            codec: "avc1",
+            fileSize: 30_000_000,
+            isFavorite: true
+        )
+
+        let toSave = LibraryData(version: 1, wallpapers: [item1, item2], activeWallpaperId: item1.id)
+        try? store.save(toSave)
+
+        let loaded = try? store.load()
+        TestRunner.assert(loaded?.wallpapers.count == 2, "Reloaded exact item count (2)")
+        TestRunner.assert(loaded?.wallpapers[0].name == "Hogwarts", "Preserved item 1 name")
+        TestRunner.assert(loaded?.wallpapers[1].isFavorite == true, "Preserved item 2 favorite status")
+        TestRunner.assert(loaded?.activeWallpaperId == item1.id, "Preserved activeWallpaperId")
+    }
+
+    static func testWallpaperLibraryOperations() async {
+        let tempStoreURL = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("test_lib_mgr_\(UUID().uuidString).json")
+        let store = LibraryStore(customStoreURL: tempStoreURL)
+        defer { store.deleteStore() }
+
+        let library = WallpaperLibrary(store: store)
+        TestRunner.assert(library.wallpapers.isEmpty, "New library is empty")
+
+        let tempVideoURL = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("luma_lib_test.mp4")
+        try? FileManager.default.removeItem(at: tempVideoURL)
+        defer { try? FileManager.default.removeItem(at: tempVideoURL) }
+
+        do {
+            try await createSyntheticTestVideo(at: tempVideoURL)
+            let added = try await library.addWallpaper(from: tempVideoURL)
+
+            TestRunner.assert(library.wallpapers.count == 1, "Wallpaper added to library")
+            TestRunner.assert(library.selectedWallpaperId == added.id, "Newly added item is selected")
+            TestRunner.assert(added.isAvailable, "Added file is available on disk")
+
+            // Test search
+            library.searchText = "luma"
+            TestRunner.assert(library.filteredWallpapers.count == 1, "Search matches name")
+            library.searchText = "nonexistent_query"
+            TestRunner.assert(library.filteredWallpapers.isEmpty, "Search excludes non-matching")
+            library.searchText = ""
+
+            // Test favorite toggle
+            library.toggleFavorite(id: added.id)
+            TestRunner.assert(library.wallpapers.first?.isFavorite == true, "Wallpaper is favorite")
+            library.filterFavoritesOnly = true
+            TestRunner.assert(library.filteredWallpapers.count == 1, "Filter favorites includes item")
+            library.filterFavoritesOnly = false
+
+            // Test set as desktop
+            library.setAsDesktop(id: added.id)
+            TestRunner.assert(library.activeDesktopWallpaperId == added.id, "Item marked as active on desktop")
+            TestRunner.assert(library.activeDesktopWallpaper?.id == added.id, "activeDesktopWallpaper returns item")
+
+            library.stopDesktop()
+            TestRunner.assert(library.activeDesktopWallpaperId == nil, "Active desktop cleared after stop")
+
+            // Test missing file handling
+            let missingItem = WallpaperItem(
+                name: "Deleted Video",
+                fileURL: URL(fileURLWithPath: "/tmp/this_file_does_not_exist_98765.mp4")
+            )
+            TestRunner.assert(!missingItem.isAvailable, "Item correctly marked as unavailable when file is missing")
+
+            // Test remove
+            library.removeWallpaper(id: added.id)
+            TestRunner.assert(library.wallpapers.isEmpty, "Wallpaper removed from library")
+        } catch {
+            TestRunner.assert(false, "Library operations test failed: \(error)")
+        }
+    }
+
     static func main() async {
         print("========================================")
         print("  LumaWall Automated Test Suite")
@@ -261,6 +358,14 @@ struct TestsMain {
             await testWallpaperEngineLifecycle()
         }
 
+        await TestRunner.runSuite("LibraryStore Persistence Tests") {
+            testLibraryStorePersistence()
+        }
+
+        await TestRunner.runSuite("WallpaperLibrary Operations Tests") {
+            await testWallpaperLibraryOperations()
+        }
+
         print("\n========================================")
         print("Results: \(TestRunner.passed) passed, \(TestRunner.failed) failed")
         print("========================================")
@@ -270,3 +375,4 @@ struct TestsMain {
         }
     }
 }
+
