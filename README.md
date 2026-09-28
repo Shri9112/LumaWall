@@ -10,9 +10,12 @@ Engineered from the ground up for Apple Silicon (M2 and newer), LumaWall renders
 
 ## Features
 
+- **Lock Screen Live Motion & Seamless Unlock Transition**: Bundled with a native macOS 26 `com.apple.wallpaper` ExtensionKit extension (`LumaWallWallpaperExtension.appex`) that renders live looping video on the Lock Screen and creates a 100% seamless, unbroken visual transition into the desktop when unlocking with Touch ID.
+- **Zero-Glitch Color Synchronization**: Automatically updates macOS system desktop picture to match the active video's keyframe, eliminating Menu Bar header orange tinting when opening apps and stopping 3-finger swipe wallpaper flashes.
 - **Behind Desktop Icons**: Renders strictly behind Finder icons, folders, and desktop widgets at the CoreGraphics desktop window level (`-2147483623`).
 - **Full Interaction Pass-Through**: Mouse clicks, double-clicks, selection marquees, and right-click desktop menus pass completely through to Finder.
 - **Never Steals Focus**: Keyboard focus and main window status remain strictly with your active applications.
+- **100% Reliable Native Menu Bar Extra**: Uses AppKit `NSStatusItem` + `NSMenu` rather than SwiftUI `MenuBarExtra`, guaranteeing immediate click response with zero dropped events or freezes.
 - **Hardware-Accelerated 4K/8K Playback**: Zero CPU frame copying. Apple Silicon's dedicated Media Engine (VideoToolbox) decodes directly to unified GPU memory.
 - **Seamless Hardware Looping**: Built on `AVPlayerLooper` and `AVQueuePlayer` to eliminate black frames, audio pops, and stutter between loop cycles.
 - **Multi-Monitor Flexibility**:
@@ -26,8 +29,7 @@ Engineered from the ground up for Apple Silicon (M2 and newer), LumaWall renders
   - Optional "Pause on Battery Power" mode (preserves 100% of MacBook battery).
   - Zero polling loops or background timers.
 - **Zero-Copy Video Library**: Large 4K video files are never duplicated. Referenced in place via lightweight metadata caching and security-scoped bookmarks.
-- **Menu Bar Companion**: Quick Play/Pause, wallpaper switcher, display assignments, and clean Quit action from the macOS menu bar.
-- **Launch at Login**: Managed via Apple's official `SMAppService.mainApp` API (zero fragile shell scripts or manual plists).
+- **Continuous Background Daemon Support**: Can run as an independent launchd daemon starting automatically on boot with zero Dock clutter.
 - **100% Offline & Private**: Zero network activity, zero telemetry, zero analytics, zero cloud accounts.
 
 ---

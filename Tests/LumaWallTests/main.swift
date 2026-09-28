@@ -428,6 +428,39 @@ struct TestsMain {
         TestRunner.assert(manager.statusDescription.contains("Not Available") || manager.statusDescription.contains("Not Registered") || manager.statusDescription.contains("Enabled"), "LoginItemManager handles status gracefully")
     }
 
+    static func testLockScreenManager() {
+        TestRunner.assert(LockScreenManager.extensionIdentifier == "com.lumawall.app.wallpaper-extension", "LockScreenManager has correct extension identifier")
+        TestRunner.assert(!LockScreenManager.configurationToken.isEmpty, "LockScreenManager configuration token is valid")
+
+        let configURL = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent("Library/Application Support/LumaWall/active_lockscreen.json")
+
+        // Backup existing config
+        let existingData = try? Data(contentsOf: configURL)
+
+        let tempVideo = URL(fileURLWithPath: "/tmp/lumawall_test_stage.mp4")
+        let tempThumb = URL(fileURLWithPath: "/tmp/lumawall_test_stage.jpg")
+
+        // Test staging
+        LockScreenManager.shared.stageLockScreen(videoURL: tempVideo, thumbnailURL: tempThumb)
+
+        TestRunner.assert(FileManager.default.fileExists(atPath: configURL.path), "active_lockscreen.json exists after staging")
+
+        if let data = try? Data(contentsOf: configURL),
+           let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+            TestRunner.assert(json["videoPath"] as? String == tempVideo.path, "Staged JSON preserves video path")
+            TestRunner.assert(json["thumbnailPath"] as? String == tempThumb.path, "Staged JSON preserves thumbnail path")
+            TestRunner.assert(json["isMuted"] as? Bool == true, "Staged JSON default isMuted is true")
+        } else {
+            TestRunner.assert(false, "Failed to read or parse staged JSON")
+        }
+
+        // Restore original config
+        if let original = existingData {
+            try? original.write(to: configURL, options: .atomic)
+        }
+    }
+
     static func main() async {
         print("========================================")
         print("  LumaWall Automated Test Suite")
@@ -475,6 +508,10 @@ struct TestsMain {
 
         await TestRunner.runSuite("LoginItemManager Tests") {
             testLoginItemManager()
+        }
+
+        await TestRunner.runSuite("LockScreenManager Tests") {
+            testLockScreenManager()
         }
 
         print("\n========================================")
