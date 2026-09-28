@@ -31,5 +31,6 @@ Icon?
 .vscode/
 
 # Build artifacts and bundles
+build/
 *.app/
 *.dSYM/
