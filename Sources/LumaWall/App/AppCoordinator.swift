@@ -51,15 +51,13 @@ public final class AppCoordinator {
 
     /// Brings the main LumaWall window to the front
     public func showMainWindow() {
-        NSApp.activate(ignoringOtherApps: true)
-        for window in NSApp.windows where !(window is WallpaperWindow) {
-            window.makeKeyAndOrderFront(nil)
-        }
+        MainWindowController.shared.showWindow()
     }
 
     /// Shuts down all wallpaper playback and terminates the application cleanly
     public func quit() {
         LumaLogger.app.info("AppCoordinator: cleanly shutting down LumaWall")
+        MainWindowController.shared.hideWindow()
         DisplayManager.shared.stopAll()
         WallpaperEngine.shared.stopWallpaper()
         NSApp.terminate(nil)

@@ -61,16 +61,21 @@ public final class StatusItemManager: NSObject, NSMenuDelegate {
         // 2. Playback Controls
         if displayManager.isAnyDisplayActive {
             let playPauseTitle = displayManager.isPlaying ? "Pause Wallpaper" : "Play Wallpaper"
+            let playPauseIcon = displayManager.isPlaying ? "pause.fill" : "play.fill"
             let playPauseItem = NSMenuItem(title: playPauseTitle, action: #selector(togglePlayPause), keyEquivalent: "p")
+            playPauseItem.image = NSImage(systemSymbolName: playPauseIcon, accessibilityDescription: nil)
             playPauseItem.target = self
             menu.addItem(playPauseItem)
 
             let muteTitle = displayManager.isMuted ? "Unmute Audio" : "Mute Audio"
+            let muteIcon = displayManager.isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill"
             let muteItem = NSMenuItem(title: muteTitle, action: #selector(toggleMute), keyEquivalent: "m")
+            muteItem.image = NSImage(systemSymbolName: muteIcon, accessibilityDescription: nil)
             muteItem.target = self
             menu.addItem(muteItem)
 
             let stopItem = NSMenuItem(title: "Stop Wallpaper", action: #selector(stopWallpaper), keyEquivalent: "s")
+            stopItem.image = NSImage(systemSymbolName: "stop.fill", accessibilityDescription: nil)
             stopItem.target = self
             menu.addItem(stopItem)
 
@@ -92,6 +97,7 @@ public final class StatusItemManager: NSObject, NSMenuDelegate {
             }
 
             let changeItem = NSMenuItem(title: "Change Wallpaper", action: nil, keyEquivalent: "")
+            changeItem.image = NSImage(systemSymbolName: "photo.on.rectangle", accessibilityDescription: nil)
             changeItem.submenu = changeMenu
             menu.addItem(changeItem)
         }
@@ -109,6 +115,7 @@ public final class StatusItemManager: NSObject, NSMenuDelegate {
         displaysMenu.addItem(individualItem)
 
         let displaysItem = NSMenuItem(title: "Displays", action: nil, keyEquivalent: "")
+        displaysItem.image = NSImage(systemSymbolName: "display.2", accessibilityDescription: nil)
         displaysItem.submenu = displaysMenu
         menu.addItem(displaysItem)
 
@@ -116,6 +123,7 @@ public final class StatusItemManager: NSObject, NSMenuDelegate {
 
         // 5. Open App Window
         let openItem = NSMenuItem(title: "Open Wallpaper Library…", action: #selector(openMainWindow), keyEquivalent: "o")
+        openItem.image = NSImage(systemSymbolName: "sparkles.tv", accessibilityDescription: nil)
         openItem.target = self
         menu.addItem(openItem)
 
@@ -123,6 +131,7 @@ public final class StatusItemManager: NSObject, NSMenuDelegate {
 
         // 6. Quit
         let quitItem = NSMenuItem(title: "Quit LumaWall", action: #selector(quitApp), keyEquivalent: "q")
+        quitItem.image = NSImage(systemSymbolName: "power", accessibilityDescription: nil)
         quitItem.target = self
         menu.addItem(quitItem)
     }

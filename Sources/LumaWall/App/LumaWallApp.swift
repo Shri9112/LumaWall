@@ -3,17 +3,42 @@ import AppKit
 import LumaWallKit
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
+    func applicationWillFinishLaunching(_ notification: Notification) {
+        // Enforce single instance: prevent duplicate processes and duplicate menu bar icons
+        let myPID = ProcessInfo.processInfo.processIdentifier
+        let bundleId = Bundle.main.bundleIdentifier ?? "com.lumawall.app"
+        let runningInstances = NSRunningApplication.runningApplications(withBundleIdentifier: bundleId)
+            .filter { $0.processIdentifier != myPID }
+
+        if let existingInstance = runningInstances.first {
+            LumaLogger.app.info("Another LumaWall instance is already running (PID: \(existingInstance.processIdentifier)). Notifying it to open window.")
+            DistributedNotificationCenter.default().postNotificationName(
+                NSNotification.Name("com.lumawall.app.show-window"),
+                object: nil,
+                userInfo: nil,
+                deliverImmediately: true
+            )
+            existingInstance.activate()
+            exit(0)
+        }
+    }
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Initialize native AppKit NSStatusItem
         StatusItemManager.shared.setup()
 
-        if CommandLine.arguments.contains("--background") {
+        let isBackground = CommandLine.arguments.contains("--background")
+        if !isBackground {
+            // Normal user launch (e.g. double-clicked app): show the wallpaper library window!
             DispatchQueue.main.async {
-                for window in NSApp.windows where !(window is WallpaperWindow) {
-                    window.orderOut(nil)
-                }
+                MainWindowController.shared.showWindow()
             }
         }
+    }
+
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        MainWindowController.shared.showWindow()
+        return true
     }
 }
 
@@ -27,11 +52,8 @@ struct LumaWallApp: App {
     }
 
     var body: some Scene {
-        WindowGroup("LumaWall", id: "main") {
-            ContentView()
+        Settings {
+            EmptyView()
         }
-        .windowStyle(.titleBar)
-        .windowToolbarStyle(.unified)
-        .defaultSize(width: 960, height: 640)
     }
 }
