@@ -45,13 +45,14 @@ public final class WallpaperEngine {
             windowControllers.append(controller)
         }
 
-        // Synchronize native macOS desktop picture to eliminate menu bar tint & 3-finger swipe glitches
+        // Synchronize native macOS desktop picture and stage Lock Screen live motion
         Task { @MainActor in
             let identifier = url.lastPathComponent
             if let thumbURL = try? await ThumbnailGenerator.shared.generateThumbnail(for: url, identifier: identifier) {
                 for screen in NSScreen.screens {
                     try? NSWorkspace.shared.setDesktopImageURL(thumbURL, for: screen, options: [:])
                 }
+                LockScreenManager.shared.stageLockScreen(videoURL: url, thumbnailURL: thumbURL)
             }
         }
 

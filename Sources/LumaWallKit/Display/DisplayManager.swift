@@ -184,11 +184,12 @@ public final class DisplayManager {
             controllers[displayID] = controller
         }
 
-        // Synchronize static macOS desktop picture to eliminate menu bar tint & 3-finger swipe glitches
+        // Synchronize static macOS desktop picture and stage Lock Screen live motion
         Task { @MainActor in
             let identifier = item.id.uuidString
             if let thumbURL = try? await ThumbnailGenerator.shared.generateThumbnail(for: item.fileURL, identifier: identifier) {
                 try? NSWorkspace.shared.setDesktopImageURL(thumbURL, for: screen, options: [:])
+                LockScreenManager.shared.stageLockScreen(videoURL: item.fileURL, thumbnailURL: thumbURL)
             }
         }
     }

@@ -56,4 +56,15 @@ EOF
 
 echo "APPL????" > "$CONTENTS_DIR/PkgInfo"
 
+# Build and embed LumaWallWallpaperExtension.appex
+EXT_DIR="$APP_DIR/Contents/Extensions/LumaWallWallpaperExtension.appex"
+echo "Building LumaWallWallpaperExtension (macOS 26+ Lock Screen live engine)..."
+mkdir -p "$EXT_DIR/Contents/MacOS"
+swiftc -target arm64-apple-macos26.0 -parse-as-library -O \
+    "$PROJECT_ROOT"/Sources/LumaWallWallpaperExtension/*.swift \
+    -o "$EXT_DIR/Contents/MacOS/LumaWallWallpaperExtension"
+cp "$PROJECT_ROOT/Sources/LumaWallWallpaperExtension/Info.plist" "$EXT_DIR/Contents/Info.plist"
+echo "XPC!" > "$EXT_DIR/Contents/PkgInfo"
+
 echo "LumaWall.app successfully packaged at: $APP_DIR"
+

@@ -19,6 +19,10 @@ echo "2. Installing to $APP_DEST..."
 rm -rf "$APP_DEST"
 cp -R "$APP_SOURCE" "$APP_DEST"
 
+# Register ExtensionKit wallpaper extension for Lock Screen motion
+echo "Registering Lock Screen wallpaper extension..."
+pluginkit -a "$APP_DEST/Contents/Extensions/LumaWallWallpaperExtension.appex" 2>/dev/null || true
+
 # 3. Create LaunchAgents Directory
 LAUNCH_AGENTS_DIR="$HOME/Library/LaunchAgents"
 mkdir -p "$LAUNCH_AGENTS_DIR"
