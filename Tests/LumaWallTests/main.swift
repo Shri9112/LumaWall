@@ -329,6 +329,57 @@ struct TestsMain {
         }
     }
 
+    static func testDisplayManagerAndConfigurations() async {
+        let displayManager = DisplayManager.shared
+        displayManager.refreshDisplays()
+
+        TestRunner.assert(!displayManager.displays.isEmpty, "Detected at least one physical display")
+        guard let firstDisplay = displayManager.displays.first else { return }
+
+        TestRunner.assert(firstDisplay.id > 0, "Display has valid CGDirectDisplayID")
+        TestRunner.assert(!firstDisplay.name.isEmpty, "Display has non-empty localized name")
+        TestRunner.assert(!firstDisplay.resolutionDescription.isEmpty, "Display has non-empty resolution description")
+
+        // Test DisplayMode & Settings serialization
+        let originalMode = displayManager.settings.mode
+        displayManager.setDisplayMode(.individual)
+        TestRunner.assert(displayManager.settings.mode == .individual, "DisplayManager switches to individual mode")
+
+        displayManager.setDisplayMode(.unified)
+        TestRunner.assert(displayManager.settings.mode == .unified, "DisplayManager switches to unified mode")
+
+        // Create synthetic video and test multi-display assignments
+        let tempVideoURL = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("luma_disp_test.mp4")
+        try? FileManager.default.removeItem(at: tempVideoURL)
+        defer { try? FileManager.default.removeItem(at: tempVideoURL) }
+
+        do {
+            try await createSyntheticTestVideo(at: tempVideoURL)
+            let item = WallpaperItem(name: "Multi-Display Wallpaper", fileURL: tempVideoURL)
+
+            // Unified assignment
+            displayManager.setUnifiedWallpaper(item: item)
+            TestRunner.assert(displayManager.activeWallpaperId(for: firstDisplay.id) == item.id, "Unified wallpaper active on display")
+            TestRunner.assert(displayManager.isAnyDisplayActive, "Reports isAnyDisplayActive == true")
+
+            // Individual assignment
+            let individualItem = WallpaperItem(name: "Individual Wallpaper", fileURL: tempVideoURL)
+            displayManager.setDisplayMode(.individual)
+            displayManager.setIndividualWallpaper(item: individualItem, for: firstDisplay.id)
+            TestRunner.assert(displayManager.activeWallpaperId(for: firstDisplay.id) == individualItem.id, "Individual wallpaper active on display")
+
+            // Stop wallpaper on display
+            displayManager.stopWallpaper(for: firstDisplay.id)
+            TestRunner.assert(displayManager.activeWallpaperId(for: firstDisplay.id) == nil, "Display assignment cleared after stop")
+
+            displayManager.stopAll()
+            TestRunner.assert(!displayManager.isAnyDisplayActive, "All displays stopped")
+            displayManager.setDisplayMode(originalMode)
+        } catch {
+            TestRunner.assert(false, "Display manager test failed: \(error)")
+        }
+    }
+
     static func main() async {
         print("========================================")
         print("  LumaWall Automated Test Suite")
@@ -366,6 +417,10 @@ struct TestsMain {
             await testWallpaperLibraryOperations()
         }
 
+        await TestRunner.runSuite("DisplayManager & Multi-Monitor Tests") {
+            await testDisplayManagerAndConfigurations()
+        }
+
         print("\n========================================")
         print("Results: \(TestRunner.passed) passed, \(TestRunner.failed) failed")
         print("========================================")
@@ -375,4 +430,5 @@ struct TestsMain {
         }
     }
 }
+
 

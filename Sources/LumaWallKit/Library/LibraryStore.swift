@@ -4,11 +4,18 @@ public struct LibraryData: Codable, Sendable {
     public var version: Int
     public var wallpapers: [WallpaperItem]
     public var activeWallpaperId: UUID?
+    public var displaySettings: DisplaySettings
 
-    public init(version: Int = 1, wallpapers: [WallpaperItem] = [], activeWallpaperId: UUID? = nil) {
+    public init(
+        version: Int = 1,
+        wallpapers: [WallpaperItem] = [],
+        activeWallpaperId: UUID? = nil,
+        displaySettings: DisplaySettings = DisplaySettings()
+    ) {
         self.version = version
         self.wallpapers = wallpapers
         self.activeWallpaperId = activeWallpaperId
+        self.displaySettings = displaySettings
     }
 }
 

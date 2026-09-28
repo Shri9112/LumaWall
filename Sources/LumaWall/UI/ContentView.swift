@@ -8,6 +8,7 @@ struct ContentView: View {
     @State private var isImporting = false
     @State private var importErrorMessage: String?
     @State private var showErrorAlert = false
+    @State private var showingDisplaysSheet = false
 
     private let gridColumns = [
         GridItem(.adaptive(minimum: 220, maximum: 280), spacing: 16)
@@ -83,6 +84,15 @@ struct ContentView: View {
                 }
             }
 
+            ToolbarItem(placement: .secondaryAction) {
+                Button {
+                    showingDisplaysSheet = true
+                } label: {
+                    Label("Displays", systemImage: "display.2")
+                }
+                .help("Manage Multi-Monitor Live Wallpapers")
+            }
+
             ToolbarItem(placement: .primaryAction) {
                 Button {
                     openFilePicker()
@@ -91,6 +101,9 @@ struct ContentView: View {
                 }
                 .buttonStyle(.borderedProminent)
             }
+        }
+        .sheet(isPresented: $showingDisplaysSheet) {
+            DisplaysView()
         }
         .alert("Import Error", isPresented: $showErrorAlert) {
             Button("OK", role: .cancel) {}

@@ -73,6 +73,7 @@ public final class WallpaperLibrary {
 
             self.wallpapers = loadedItems
             self.activeDesktopWallpaperId = data.activeWallpaperId
+            DisplayManager.shared.settings = data.displaySettings
 
             if selectedWallpaperId == nil, let first = wallpapers.first {
                 selectedWallpaperId = first.id
@@ -89,7 +90,8 @@ public final class WallpaperLibrary {
         let data = LibraryData(
             version: 1,
             wallpapers: wallpapers,
-            activeWallpaperId: activeDesktopWallpaperId
+            activeWallpaperId: activeDesktopWallpaperId,
+            displaySettings: DisplayManager.shared.settings
         )
         do {
             try store.save(data)
@@ -200,6 +202,7 @@ public final class WallpaperLibrary {
         }
 
         WallpaperEngine.shared.setWallpaper(url: item.fileURL)
+        DisplayManager.shared.setUnifiedWallpaper(item: item)
         wallpapers[index].lastUsed = Date()
         activeDesktopWallpaperId = id
         persist()
@@ -208,6 +211,7 @@ public final class WallpaperLibrary {
     /// Stops desktop wallpaper playback.
     public func stopDesktop() {
         WallpaperEngine.shared.stopWallpaper()
+        DisplayManager.shared.stopAll()
         activeDesktopWallpaperId = nil
         persist()
     }
