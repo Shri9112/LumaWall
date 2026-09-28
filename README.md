@@ -115,7 +115,18 @@ To build an optimized release binary and package `build/LumaWall.app`:
 ```bash
 ./Scripts/package_app.sh
 ```
-The resulting application will be located at `build/LumaWall.app`. You can move it to `/Applications` or double-click to launch.
+The resulting application will be located at `build/LumaWall.app`.
+
+### Running as a Continuous Background Daemon (Like MySQL / Docker)
+If you want LumaWall to run permanently in the background without needing to manually open it, without cluttering your Dock (`LSUIElement = true`), and starting automatically on laptop boot/login:
+```bash
+# Install to /Applications and register as macOS LaunchAgent daemon
+./Scripts/install_service.sh
+```
+To stop and uninstall the background service:
+```bash
+./Scripts/uninstall_service.sh
+```
 
 ---
 
