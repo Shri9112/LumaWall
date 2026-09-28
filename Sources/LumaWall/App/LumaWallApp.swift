@@ -5,6 +5,7 @@ import LumaWallKit
 struct LumaWallApp: App {
     init() {
         LumaLogger.app.info("LumaWall application initialized")
+        AppCoordinator.shared.startup()
     }
 
     var body: some Scene {
@@ -14,5 +15,9 @@ struct LumaWallApp: App {
         .windowStyle(.titleBar)
         .windowToolbarStyle(.unified)
         .defaultSize(width: 960, height: 640)
+
+        MenuBarExtra("LumaWall", systemImage: "sparkles.tv") {
+            MenuBarContentView()
+        }
     }
 }

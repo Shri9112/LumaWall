@@ -421,6 +421,13 @@ struct TestsMain {
         powerManager.settings = settings
     }
 
+    static func testLoginItemManager() {
+        let manager = LoginItemManager.shared
+        manager.refreshStatus()
+        TestRunner.assert(!manager.statusDescription.isEmpty, "LoginItemManager reports status description")
+        TestRunner.assert(manager.statusDescription.contains("Not Available") || manager.statusDescription.contains("Not Registered") || manager.statusDescription.contains("Enabled"), "LoginItemManager handles status gracefully")
+    }
+
     static func main() async {
         print("========================================")
         print("  LumaWall Automated Test Suite")
@@ -464,6 +471,10 @@ struct TestsMain {
 
         await TestRunner.runSuite("PowerManager & Energy Settings Tests") {
             testPowerManagerAndEnergySettings()
+        }
+
+        await TestRunner.runSuite("LoginItemManager Tests") {
+            testLoginItemManager()
         }
 
         print("\n========================================")
