@@ -52,7 +52,7 @@ public final class AppCoordinator {
     /// Brings the main LumaWall window to the front
     public func showMainWindow() {
         NSApp.activate(ignoringOtherApps: true)
-        if let window = NSApp.windows.first(where: { !($0 is WallpaperWindow) && $0.canBecomeKey }) {
+        for window in NSApp.windows where !(window is WallpaperWindow) {
             window.makeKeyAndOrderFront(nil)
         }
     }

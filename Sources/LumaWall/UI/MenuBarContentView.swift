@@ -3,6 +3,7 @@ import AppKit
 import LumaWallKit
 
 struct MenuBarContentView: View {
+    @Environment(\.openWindow) private var openWindow
     @State private var library = WallpaperLibrary.shared
     @State private var displayManager = DisplayManager.shared
     @State private var powerManager = PowerManager.shared
@@ -122,6 +123,8 @@ struct MenuBarContentView: View {
 
             // Application Open / Quit Actions
             Button {
+                NSApp.activate(ignoringOtherApps: true)
+                openWindow(id: "main")
                 AppCoordinator.shared.showMainWindow()
             } label: {
                 Label("Open LumaWall…", systemImage: "sparkles.tv")
