@@ -1,0 +1,35 @@
+# Xcode & Swift Package Manager
+.build/
+Packages/
+DerivedData/
+.swiftpm/
+xcuserdata/
+*.xcworkspace/xcuserdata/
+*.xcuserstate
+
+# macOS System Files
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+.Spotlight-V100
+.Trashes
+
+# Large Wallpaper Media (keep repo small, user videos stored locally)
+*.mp4
+*.mov
+*.m4v
+*.hevc
+!Tests/Fixtures/*.mp4
+
+# IDE & Editor Temporary Files
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+
+# Build artifacts and bundles
+*.app/
+*.dSYM/
