@@ -66,6 +66,7 @@ struct VideoPreviewView: View {
     @State private var isValidating = false
     @State private var errorMessage: String?
     @State private var isHoveringControls = false
+    @State private var engine = WallpaperEngine.shared
 
     private let validator = VideoValidator()
 
@@ -88,12 +89,17 @@ struct VideoPreviewView: View {
             }
             .frame(minHeight: 380)
 
+            if selectedURL != nil {
+                Divider()
+                desktopControlBar
+            }
+
             Divider()
 
             // Metadata and Controls Footer
             footerBar
         }
-        .frame(minWidth: 700, minHeight: 520)
+        .frame(minWidth: 720, minHeight: 560)
     }
 
     // MARK: - Subviews
@@ -107,12 +113,27 @@ struct VideoPreviewView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text("LumaWall")
                     .font(.headline)
-                Text("Hardware-Accelerated Live Wallpaper Preview")
+                Text("Native Apple Silicon Live Wallpaper")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
 
             Spacer()
+
+            if engine.isDesktopActive {
+                HStack(spacing: 6) {
+                    Circle()
+                        .fill(Color.green)
+                        .frame(width: 7, height: 7)
+                    Text("Desktop Wallpaper Running")
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(.green)
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(Color.green.opacity(0.12), in: Capsule())
+                .padding(.trailing, 6)
+            }
 
             if isValidating {
                 ProgressView()
@@ -131,6 +152,67 @@ struct VideoPreviewView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
         .background(.bar)
+    }
+
+    private var desktopControlBar: some View {
+        HStack(spacing: 12) {
+            let isCurrentDesktop = engine.isDesktopActive && engine.activeWallpaperURL == selectedURL
+
+            if isCurrentDesktop {
+                HStack(spacing: 6) {
+                    Circle()
+                        .fill(Color.green)
+                        .frame(width: 8, height: 8)
+                    Text("Active on Desktop")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.green)
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(Color.green.opacity(0.12), in: Capsule())
+
+                Spacer()
+
+                Button {
+                    engine.togglePlayPause()
+                } label: {
+                    Label(engine.isPlaying ? "Pause Desktop" : "Resume Desktop", systemImage: engine.isPlaying ? "pause.fill" : "play.fill")
+                }
+                .buttonStyle(.bordered)
+
+                Button(role: .destructive) {
+                    engine.stopWallpaper()
+                } label: {
+                    Label("Stop Wallpaper", systemImage: "xmark.circle")
+                }
+                .buttonStyle(.bordered)
+            } else {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(selectedURL?.lastPathComponent ?? "Selected Video")
+                        .font(.subheadline.weight(.semibold))
+                        .lineLimit(1)
+                    Text("Ready to apply behind desktop icons")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                Button {
+                    if let url = selectedURL {
+                        engine.setWallpaper(url: url)
+                    }
+                } label: {
+                    Label("Set as Desktop Wallpaper", systemImage: "sparkles.tv")
+                        .padding(.horizontal, 4)
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.regular)
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .background(.ultraThickMaterial)
     }
 
     private var videoPlaybackArea: some View {

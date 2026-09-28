@@ -1,4 +1,5 @@
 import Foundation
+import AppKit
 import AVFoundation
 import CoreMedia
 import LumaWallKit
@@ -178,6 +179,59 @@ struct TestsMain {
         }
     }
 
+    static func testWallpaperWindowProperties() {
+        guard let screen = NSScreen.main ?? NSScreen.screens.first else {
+            TestRunner.assert(false, "No NSScreen available for window test")
+            return
+        }
+
+        let window = WallpaperWindow(screen: screen)
+        TestRunner.assert(window.level.rawValue == Int(CGWindowLevelForKey(.desktopWindow)), "Window level is exactly desktopWindow (-2147483623)")
+        TestRunner.assert(window.ignoresMouseEvents, "Window ignores mouse events for full pass-through")
+        TestRunner.assert(!window.canBecomeKey, "Window refuses key focus (canBecomeKey == false)")
+        TestRunner.assert(!window.canBecomeMain, "Window refuses main status (canBecomeMain == false)")
+        TestRunner.assert(!window.hasShadow, "Window has no shadow")
+        TestRunner.assert(window.styleMask.contains(.borderless), "Window is borderless")
+        TestRunner.assert(window.collectionBehavior.contains(.canJoinAllSpaces), "Window joins all Spaces")
+        TestRunner.assert(window.collectionBehavior.contains(.stationary), "Window is stationary during Exposé")
+        TestRunner.assert(window.collectionBehavior.contains(.ignoresCycle), "Window is excluded from window cycling")
+        TestRunner.assert(window.collectionBehavior.contains(.fullScreenAuxiliary), "Window remains behind fullscreen spaces")
+    }
+
+    static func testWallpaperEngineLifecycle() async {
+        let engine = WallpaperEngine.shared
+        TestRunner.assert(!engine.isDesktopActive, "Engine initially idle")
+        TestRunner.assert(engine.activeWallpaperURL == nil, "No initial active URL")
+
+        let tempVideoURL = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("luma_engine_test.mp4")
+        try? FileManager.default.removeItem(at: tempVideoURL)
+        defer { try? FileManager.default.removeItem(at: tempVideoURL) }
+
+        do {
+            try await createSyntheticTestVideo(at: tempVideoURL)
+            engine.setWallpaper(url: tempVideoURL)
+
+            TestRunner.assert(engine.isDesktopActive, "Engine reports desktop active after setWallpaper")
+            TestRunner.assert(engine.activeWallpaperURL == tempVideoURL, "Engine tracks active wallpaper URL")
+            TestRunner.assert(engine.isPlaying, "Engine reports isPlaying == true")
+
+            engine.pause()
+            TestRunner.assert(!engine.isPlaying, "Engine reports isPlaying == false after pause")
+
+            engine.resume()
+            TestRunner.assert(engine.isPlaying, "Engine reports isPlaying == true after resume")
+
+            engine.setMuted(false)
+            TestRunner.assert(!engine.isMuted, "Engine updates mute state to false")
+
+            engine.stopWallpaper()
+            TestRunner.assert(!engine.isDesktopActive, "Engine reports not active after stopWallpaper")
+            TestRunner.assert(engine.activeWallpaperURL == nil, "Active wallpaper URL cleared after stop")
+        } catch {
+            TestRunner.assert(false, "Engine lifecycle test failed: \(error)")
+        }
+    }
+
     static func main() async {
         print("========================================")
         print("  LumaWall Automated Test Suite")
@@ -197,6 +251,14 @@ struct TestsMain {
 
         await TestRunner.runSuite("End-to-End Video Validation & Thumbnail Tests") {
             await testEndToEndValidationAndThumbnail()
+        }
+
+        await TestRunner.runSuite("WallpaperWindow Desktop Integration Tests") {
+            testWallpaperWindowProperties()
+        }
+
+        await TestRunner.runSuite("WallpaperEngine Lifecycle Tests") {
+            await testWallpaperEngineLifecycle()
         }
 
         print("\n========================================")
