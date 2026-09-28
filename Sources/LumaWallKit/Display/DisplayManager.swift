@@ -183,6 +183,14 @@ public final class DisplayManager {
             controller.loadVideo(url: item.fileURL)
             controllers[displayID] = controller
         }
+
+        // Synchronize static macOS desktop picture to eliminate menu bar tint & 3-finger swipe glitches
+        Task { @MainActor in
+            let identifier = item.id.uuidString
+            if let thumbURL = try? await ThumbnailGenerator.shared.generateThumbnail(for: item.fileURL, identifier: identifier) {
+                try? NSWorkspace.shared.setDesktopImageURL(thumbURL, for: screen, options: [:])
+            }
+        }
     }
 
     private func updateEngineState() {

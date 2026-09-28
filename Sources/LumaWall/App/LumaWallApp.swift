@@ -4,6 +4,9 @@ import LumaWallKit
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // Initialize native AppKit NSStatusItem
+        StatusItemManager.shared.setup()
+
         if CommandLine.arguments.contains("--background") {
             DispatchQueue.main.async {
                 for window in NSApp.windows where !(window is WallpaperWindow) {
@@ -30,9 +33,5 @@ struct LumaWallApp: App {
         .windowStyle(.titleBar)
         .windowToolbarStyle(.unified)
         .defaultSize(width: 960, height: 640)
-
-        MenuBarExtra("LumaWall", systemImage: "sparkles.tv") {
-            MenuBarContentView()
-        }
     }
 }
