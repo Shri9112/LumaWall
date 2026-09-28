@@ -380,6 +380,47 @@ struct TestsMain {
         }
     }
 
+    static func testPowerManagerAndEnergySettings() {
+        let powerManager = PowerManager.shared
+
+        // Test AppSettings defaults
+        var settings = AppSettings()
+        TestRunner.assert(settings.pauseOnDisplaySleep, "Default pauseOnDisplaySleep is true")
+        TestRunner.assert(settings.pauseOnScreenLock, "Default pauseOnScreenLock is true")
+        TestRunner.assert(settings.autoMuteAudio, "Default autoMuteAudio is true")
+        TestRunner.assert(!settings.pauseOnBattery, "Default pauseOnBattery is false")
+
+        powerManager.settings = settings
+
+        // Test Display Sleep suspension
+        powerManager.simulateDisplaySleep(true)
+        TestRunner.assert(powerManager.isSuspended, "Suspended when display sleeps")
+
+        powerManager.simulateDisplaySleep(false)
+        TestRunner.assert(!powerManager.isSuspended, "Resumed when display wakes")
+
+        // Test Screen Lock suspension
+        powerManager.simulateScreenLock(true)
+        TestRunner.assert(powerManager.isSuspended, "Suspended when screen is locked")
+
+        powerManager.simulateScreenLock(false)
+        TestRunner.assert(!powerManager.isSuspended, "Resumed when screen is unlocked")
+
+        // Test Battery suspension when pauseOnBattery is enabled
+        settings.pauseOnBattery = true
+        powerManager.settings = settings
+
+        powerManager.simulateBatteryState(true)
+        TestRunner.assert(powerManager.isSuspended, "Suspended on battery when pauseOnBattery is enabled")
+
+        powerManager.simulateBatteryState(false)
+        TestRunner.assert(!powerManager.isSuspended, "Resumed on AC power")
+
+        // Reset to default
+        settings.pauseOnBattery = false
+        powerManager.settings = settings
+    }
+
     static func main() async {
         print("========================================")
         print("  LumaWall Automated Test Suite")
@@ -421,6 +462,10 @@ struct TestsMain {
             await testDisplayManagerAndConfigurations()
         }
 
+        await TestRunner.runSuite("PowerManager & Energy Settings Tests") {
+            testPowerManagerAndEnergySettings()
+        }
+
         print("\n========================================")
         print("Results: \(TestRunner.passed) passed, \(TestRunner.failed) failed")
         print("========================================")
@@ -430,5 +475,6 @@ struct TestsMain {
         }
     }
 }
+
 
 
