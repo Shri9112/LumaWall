@@ -38,11 +38,14 @@ struct WallpaperDetailView: View {
             }
             .padding(20)
         }
-        .background(Color(nsColor: .windowBackgroundColor))
         .onAppear {
             loadPreview()
         }
+        .onDisappear {
+            previewPlayer.stop()
+        }
         .onChange(of: item.id) { _, _ in
+            previewPlayer.stop()
             loadPreview()
         }
     }

@@ -42,6 +42,8 @@ public final class ThumbnailGenerator: Sendable {
         let generator = AVAssetImageGenerator(asset: asset)
         generator.appliesPreferredTrackTransform = true
         generator.maximumSize = CGSize(width: 800, height: 450)
+        generator.requestedTimeToleranceBefore = .positiveInfinity
+        generator.requestedTimeToleranceAfter = .positiveInfinity
 
         let durationSeconds = CMTimeGetSeconds(try await asset.load(.duration))
         let captureSeconds: Double

@@ -92,7 +92,11 @@ public enum VideoDeploymentService {
 
         let destURL = dir.appendingPathComponent(url.lastPathComponent)
         do {
-            try fileManager.copyItem(at: url, to: destURL)
+            // High-speed APFS clone: instantaneous copy with 0 additional disk space overhead
+            if copyfile(url.path, destURL.path, nil, copyfile_flags_t(COPYFILE_CLONE | COPYFILE_DATA)) != 0 {
+                // Fallback for cross-volume / external drive copies
+                try fileManager.copyItem(at: url, to: destURL)
+            }
 
             var fps: Double = 30
             var resolution: CGSize = .zero
@@ -313,6 +317,8 @@ public enum VideoDeploymentService {
         let generator = AVAssetImageGenerator(asset: asset)
         generator.appliesPreferredTrackTransform = true
         generator.maximumSize = CGSize(width: 640, height: 360)
+        generator.requestedTimeToleranceBefore = .positiveInfinity
+        generator.requestedTimeToleranceAfter = .positiveInfinity
 
         guard let cgImage = try? await generator.image(at: .zero).image else {
             LumaLogger.video.warning("Thumbnail generation failed for \(videoURL.lastPathComponent)")
