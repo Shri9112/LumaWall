@@ -32,30 +32,42 @@ public final class DisplayManager {
 
     // MARK: - Playback & Assignment Control
 
-    /// Applies a unified wallpaper across all connected displays.
+    /// Applies a unified wallpaper across all connected displays natively via macOS WallpaperAgent.
     public func setUnifiedWallpaper(item: WallpaperItem) {
-        LumaLogger.display.info("Setting unified wallpaper '\(item.name)' on all displays")
+        LumaLogger.display.info("Setting unified wallpaper '\(item.name)' natively via WallpaperAgent")
+        stopAll()
         wallpaperCache[item.id] = item
         settings.mode = .unified
         settings.unifiedWallpaperId = item.id
 
-        applyCurrentSettingsToAllScreens()
+        Task { @MainActor in
+            do {
+                let entryID = try await VideoDeploymentService.deployVideo(url: item.fileURL, name: item.name)
+                VideoDeploymentService.applyToSystemWallpaper(entryID: entryID)
+                LumaLogger.display.info("Successfully set native unified wallpaper '\(item.name)'")
+            } catch {
+                LumaLogger.display.error("Failed to deploy native wallpaper: \(error.localizedDescription)")
+            }
+        }
     }
 
-    /// Sets an individual wallpaper for a specific physical display.
+    /// Sets an individual wallpaper for a specific physical display natively via macOS WallpaperAgent.
     public func setIndividualWallpaper(item: WallpaperItem, for displayID: CGDirectDisplayID) {
         LumaLogger.display.info("Setting individual wallpaper '\(item.name)' for display \(displayID)")
+        stopAll()
         wallpaperCache[item.id] = item
         settings.mode = .individual
         settings.assignments[displayID] = item.id
 
-        guard let screen = NSScreen.screens.first(where: { $0.displayID == displayID }) else {
-            LumaLogger.display.warning("Screen with ID \(displayID) not currently connected")
-            return
+        Task { @MainActor in
+            do {
+                let entryID = try await VideoDeploymentService.deployVideo(url: item.fileURL, name: item.name)
+                VideoDeploymentService.applyToSystemWallpaper(entryID: entryID)
+                LumaLogger.display.info("Successfully set native wallpaper '\(item.name)' for display \(displayID)")
+            } catch {
+                LumaLogger.display.error("Failed to deploy native wallpaper: \(error.localizedDescription)")
+            }
         }
-
-        applyWallpaper(item: item, to: screen)
-        updateEngineState()
     }
 
     /// Stops wallpaper on a specific display.
@@ -173,23 +185,14 @@ public final class DisplayManager {
     }
 
     private func applyWallpaper(item: WallpaperItem, to screen: NSScreen) {
-        let displayID = screen.displayID ?? 0
-
-        if let existingController = controllers[displayID] {
-            existingController.updateFrame(for: screen)
-            existingController.loadVideo(url: item.fileURL)
-        } else {
-            let controller = WallpaperWindowController(screen: screen, isMuted: isMuted)
-            controller.loadVideo(url: item.fileURL)
-            controllers[displayID] = controller
-        }
-
-        // Synchronize static macOS desktop picture and stage Lock Screen live motion
+        stopAll()
         Task { @MainActor in
-            let identifier = item.id.uuidString
-            if let thumbURL = try? await ThumbnailGenerator.shared.generateThumbnail(for: item.fileURL, identifier: identifier) {
-                try? NSWorkspace.shared.setDesktopImageURL(thumbURL, for: screen, options: [:])
-                LockScreenManager.shared.stageLockScreen(videoURL: item.fileURL, thumbnailURL: thumbURL)
+            do {
+                let entryID = try await VideoDeploymentService.deployVideo(url: item.fileURL, name: item.name)
+                VideoDeploymentService.applyToSystemWallpaper(entryID: entryID)
+                LumaLogger.display.info("Successfully deployed native wallpaper '\(item.name)' for display \(screen.displayID ?? 0)")
+            } catch {
+                LumaLogger.display.error("Failed to deploy native wallpaper: \(error.localizedDescription)")
             }
         }
     }

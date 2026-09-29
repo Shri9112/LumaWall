@@ -156,6 +156,11 @@ public final class WallpaperLibrary {
         selectedWallpaperId = item.id
         persist()
 
+        // Auto-deploy to extension library so it appears in System Settings
+        Task {
+            _ = try? await VideoDeploymentService.deployVideo(url: url, name: displayName)
+        }
+
         LumaLogger.library.info("Added wallpaper '\(item.name)' (\(item.resolutionDescription))")
         return item
     }
@@ -191,7 +196,7 @@ public final class WallpaperLibrary {
         persist()
     }
 
-    /// Sets the wallpaper with the given ID as the active desktop live wallpaper.
+    /// Sets the wallpaper with the given ID as the active desktop & lock screen wallpaper natively via macOS WallpaperAgent.
     public func setAsDesktop(id: UUID) {
         guard let index = wallpapers.firstIndex(where: { $0.id == id }) else { return }
         let item = wallpapers[index]
@@ -201,8 +206,21 @@ public final class WallpaperLibrary {
             return
         }
 
-        WallpaperEngine.shared.setWallpaper(url: item.fileURL)
-        DisplayManager.shared.setUnifiedWallpaper(item: item)
+        // Clean up any legacy floating windows
+        WallpaperEngine.shared.stopWallpaper()
+        DisplayManager.shared.stopAll()
+
+        // Deploy to sandboxed extension and configure macOS WallpaperAgent
+        Task { @MainActor in
+            do {
+                let entryID = try await VideoDeploymentService.deployVideo(url: item.fileURL, name: item.name)
+                VideoDeploymentService.applyToSystemWallpaper(entryID: entryID)
+                LumaLogger.library.info("Successfully set native wallpaper '\(item.name)' for desktop & lock screen")
+            } catch {
+                LumaLogger.library.error("Failed to deploy native wallpaper: \(error.localizedDescription)")
+            }
+        }
+
         wallpapers[index].lastUsed = Date()
         activeDesktopWallpaperId = id
         persist()

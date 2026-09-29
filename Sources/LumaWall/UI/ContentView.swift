@@ -126,6 +126,9 @@ struct ContentView: View {
         .onDrop(of: [.fileURL], isTargeted: nil) { providers in
             handleDrop(providers: providers)
         }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("com.lumawall.app.open-picker"))) { _ in
+            openFilePicker()
+        }
     }
 
     // MARK: - Subviews

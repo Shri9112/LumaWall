@@ -448,8 +448,10 @@ struct TestsMain {
 
         if let data = try? Data(contentsOf: configURL),
            let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
-            TestRunner.assert(json["videoPath"] as? String == tempVideo.path, "Staged JSON preserves video path")
-            TestRunner.assert(json["thumbnailPath"] as? String == tempThumb.path, "Staged JSON preserves thumbnail path")
+            let videoPath = json["videoPath"] as? String ?? ""
+            let thumbPath = json["thumbnailPath"] as? String ?? ""
+            TestRunner.assert(videoPath.hasSuffix("wallpaper.mov"), "Staged JSON preserves video path in sandbox container")
+            TestRunner.assert(thumbPath.hasSuffix("thumbnail.jpg"), "Staged JSON preserves thumbnail path in sandbox container")
             TestRunner.assert(json["isMuted"] as? Bool == true, "Staged JSON default isMuted is true")
         } else {
             TestRunner.assert(false, "Failed to read or parse staged JSON")

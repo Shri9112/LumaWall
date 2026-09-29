@@ -66,6 +66,39 @@ public final class ThumbnailGenerator: Sendable {
         return destinationURL
     }
 
+    /// Generates a full native-resolution (e.g. 4K UHD) still image from the video for macOS desktop & Lock Screen.
+    public func generateNativeStillFrame(
+        for videoURL: URL,
+        destinationURL: URL,
+        targetTime: TimeInterval = 0.5
+    ) async throws {
+        let asset = AVURLAsset(url: videoURL)
+        let generator = AVAssetImageGenerator(asset: asset)
+        generator.appliesPreferredTrackTransform = true
+        generator.maximumSize = .zero // Full native resolution without downscaling
+        generator.requestedTimeToleranceBefore = .zero
+        generator.requestedTimeToleranceAfter = .zero
+
+        let durationSeconds = CMTimeGetSeconds(try await asset.load(.duration))
+        let captureSeconds: Double
+        if durationSeconds.isFinite && durationSeconds > 0 {
+            captureSeconds = min(targetTime, durationSeconds / 2.0)
+        } else {
+            captureSeconds = 0.0
+        }
+
+        let cmTargetTime = CMTime(seconds: captureSeconds, preferredTimescale: 600)
+        let (cgImage, _) = try await generator.image(at: cmTargetTime)
+
+        let bitmapRep = NSBitmapImageRep(cgImage: cgImage)
+        guard let jpegData = bitmapRep.representation(using: .jpeg, properties: [.compressionFactor: 0.95]) else {
+            throw VideoValidationError.corruptedMedia("Failed to encode native still frame as JPEG")
+        }
+
+        try jpegData.write(to: destinationURL, options: .atomic)
+        LumaLogger.video.info("Generated native \(cgImage.width)x\(cgImage.height) still frame at \(destinationURL.lastPathComponent)")
+    }
+
     /// Removes cached thumbnail file for the given identifier
     public func removeThumbnail(identifier: String) {
         let destinationURL = cacheDirectory.appendingPathComponent("\(identifier).jpg")

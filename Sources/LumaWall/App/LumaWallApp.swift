@@ -24,8 +24,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        // Initialize native AppKit NSStatusItem
-        StatusItemManager.shared.setup()
+        // Initialize high-level coordinator and restore wallpaper state
+        AppCoordinator.shared.startup()
 
         let isBackground = CommandLine.arguments.contains("--background")
         if !isBackground {
@@ -40,6 +40,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         MainWindowController.shared.showWindow()
         return true
     }
+
+    func application(_ application: NSApplication, open urls: [URL]) {
+        for url in urls {
+            LumaLogger.app.info("Handling URL scheme: \(url.absoluteString)")
+            if url.scheme == "lumawall" {
+                MainWindowController.shared.showWindow()
+                if url.host == "add-video" {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        NotificationCenter.default.post(name: NSNotification.Name("com.lumawall.app.open-picker"), object: nil)
+                    }
+                }
+            }
+        }
+    }
 }
 
 @main
@@ -48,7 +62,6 @@ struct LumaWallApp: App {
 
     init() {
         LumaLogger.app.info("LumaWall application initialized")
-        AppCoordinator.shared.startup()
     }
 
     var body: some Scene {

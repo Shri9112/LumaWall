@@ -32,21 +32,20 @@ public final class AppCoordinator {
             LumaLogger.app.info("Auto-start on launch enabled: restoring last configured wallpaper")
             restoreLastWallpaperState(library: library, displayManager: displayManager)
         }
+
+        // Synchronize all library items to LumaWallWallpaperExtension container
+        Task {
+            for item in library.wallpapers where item.isAvailable {
+                _ = try? await VideoDeploymentService.deployVideo(url: item.fileURL, name: item.name)
+            }
+        }
     }
 
     private func restoreLastWallpaperState(library: WallpaperLibrary, displayManager: DisplayManager) {
-        switch displayManager.settings.mode {
-        case .unified:
-            if let unifiedId = displayManager.settings.unifiedWallpaperId ?? library.activeDesktopWallpaperId,
-               let item = library.wallpapers.first(where: { $0.id == unifiedId }),
-               item.isAvailable {
-                LumaLogger.app.info("Restoring unified wallpaper: '\(item.name)'")
-                displayManager.setUnifiedWallpaper(item: item)
-            }
-        case .individual:
-            LumaLogger.app.info("Restoring individual multi-display wallpapers")
-            displayManager.applyCurrentSettingsToAllScreens()
-        }
+        // macOS WallpaperAgent handles desktop and lock screen playback persistence natively.
+        // We ensure any legacy floating windows are cleaned up.
+        displayManager.stopAll()
+        WallpaperEngine.shared.stopWallpaper()
     }
 
     /// Brings the main LumaWall window to the front

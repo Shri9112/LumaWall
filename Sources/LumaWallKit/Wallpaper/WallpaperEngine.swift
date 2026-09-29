@@ -22,41 +22,22 @@ public final class WallpaperEngine {
 
     // MARK: - Public Engine Controls
 
-    /// Sets the specified video file as the live desktop wallpaper on all connected displays.
+    /// Sets the specified video file as the live desktop & lock screen wallpaper natively via macOS WallpaperAgent.
     public func setWallpaper(url: URL) {
-        LumaLogger.app.info("Setting desktop wallpaper: \(url.lastPathComponent)")
+        LumaLogger.app.info("Setting native desktop & lock screen wallpaper: \(url.lastPathComponent)")
 
-        // Stop any currently running desktop wallpaper
+        // Clean up any legacy floating windows
         stopWallpaper()
 
         self.activeWallpaperURL = url
         self.isDesktopActive = true
         self.isPlaying = true
 
-        let screens = NSScreen.screens
-        guard !screens.isEmpty else {
-            LumaLogger.display.error("No active NSScreen found")
-            return
-        }
-
-        for screen in screens {
-            let controller = WallpaperWindowController(screen: screen, isMuted: isMuted)
-            controller.loadVideo(url: url)
-            windowControllers.append(controller)
-        }
-
-        // Synchronize native macOS desktop picture and stage Lock Screen live motion
         Task { @MainActor in
-            let identifier = url.lastPathComponent
-            if let thumbURL = try? await ThumbnailGenerator.shared.generateThumbnail(for: url, identifier: identifier) {
-                for screen in NSScreen.screens {
-                    try? NSWorkspace.shared.setDesktopImageURL(thumbURL, for: screen, options: [:])
-                }
-                LockScreenManager.shared.stageLockScreen(videoURL: url, thumbnailURL: thumbURL)
+            if let entryID = try? await VideoDeploymentService.deployVideo(url: url) {
+                VideoDeploymentService.applyToSystemWallpaper(entryID: entryID)
             }
         }
-
-        LumaLogger.app.info("Desktop wallpaper active on \(screens.count) screen(s)")
     }
 
     /// Stops and removes the live desktop wallpaper from all displays.

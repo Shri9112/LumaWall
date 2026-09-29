@@ -38,7 +38,6 @@ public final class StatusItemManager: NSObject, NSMenuDelegate {
         menu.removeAllItems()
 
         let library = WallpaperLibrary.shared
-        let displayManager = DisplayManager.shared
 
         // 1. Status Header
         if let active = library.activeDesktopWallpaper {
@@ -46,43 +45,18 @@ public final class StatusItemManager: NSObject, NSMenuDelegate {
             headerItem.isEnabled = false
             menu.addItem(headerItem)
 
-            let stateText = displayManager.isPlaying ? "● Looping (M2 Hardware Accelerated)" : "⏸ Paused"
-            let stateItem = NSMenuItem(title: stateText, action: nil, keyEquivalent: "")
+            let stateItem = NSMenuItem(title: "● Native (Desktop & Lock Screen)", action: nil, keyEquivalent: "")
             stateItem.isEnabled = false
             menu.addItem(stateItem)
         } else {
-            let item = NSMenuItem(title: "LumaWall — Inactive", action: nil, keyEquivalent: "")
+            let item = NSMenuItem(title: "LumaWall Ready", action: nil, keyEquivalent: "")
             item.isEnabled = false
             menu.addItem(item)
         }
 
         menu.addItem(NSMenuItem.separator())
 
-        // 2. Playback Controls
-        if displayManager.isAnyDisplayActive {
-            let playPauseTitle = displayManager.isPlaying ? "Pause Wallpaper" : "Play Wallpaper"
-            let playPauseIcon = displayManager.isPlaying ? "pause.fill" : "play.fill"
-            let playPauseItem = NSMenuItem(title: playPauseTitle, action: #selector(togglePlayPause), keyEquivalent: "p")
-            playPauseItem.image = NSImage(systemSymbolName: playPauseIcon, accessibilityDescription: nil)
-            playPauseItem.target = self
-            menu.addItem(playPauseItem)
-
-            let muteTitle = displayManager.isMuted ? "Unmute Audio" : "Mute Audio"
-            let muteIcon = displayManager.isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill"
-            let muteItem = NSMenuItem(title: muteTitle, action: #selector(toggleMute), keyEquivalent: "m")
-            muteItem.image = NSImage(systemSymbolName: muteIcon, accessibilityDescription: nil)
-            muteItem.target = self
-            menu.addItem(muteItem)
-
-            let stopItem = NSMenuItem(title: "Stop Wallpaper", action: #selector(stopWallpaper), keyEquivalent: "s")
-            stopItem.image = NSImage(systemSymbolName: "stop.fill", accessibilityDescription: nil)
-            stopItem.target = self
-            menu.addItem(stopItem)
-
-            menu.addItem(NSMenuItem.separator())
-        }
-
-        // 3. Quick Wallpaper Switcher Submenu
+        // 2. Quick Wallpaper Switcher Submenu
         let wallpapers = library.wallpapers.filter { $0.isAvailable }
         if !wallpapers.isEmpty {
             let changeMenu = NSMenu()
@@ -100,28 +74,17 @@ public final class StatusItemManager: NSObject, NSMenuDelegate {
             changeItem.image = NSImage(systemSymbolName: "photo.on.rectangle", accessibilityDescription: nil)
             changeItem.submenu = changeMenu
             menu.addItem(changeItem)
+
+            menu.addItem(NSMenuItem.separator())
         }
 
-        // 4. Displays Submenu
-        let displaysMenu = NSMenu()
-        let unifiedItem = NSMenuItem(title: "Same on All Displays", action: #selector(setUnifiedMode), keyEquivalent: "")
-        unifiedItem.target = self
-        if displayManager.settings.mode == .unified { unifiedItem.state = .on }
-        displaysMenu.addItem(unifiedItem)
+        // 3. Open macOS System Settings > Wallpaper
+        let settingsItem = NSMenuItem(title: "Open macOS Wallpaper Settings…", action: #selector(openSystemWallpaperSettings), keyEquivalent: ",")
+        settingsItem.image = NSImage(systemSymbolName: "gearshape", accessibilityDescription: nil)
+        settingsItem.target = self
+        menu.addItem(settingsItem)
 
-        let individualItem = NSMenuItem(title: "Individual per Display", action: #selector(setIndividualMode), keyEquivalent: "")
-        individualItem.target = self
-        if displayManager.settings.mode == .individual { individualItem.state = .on }
-        displaysMenu.addItem(individualItem)
-
-        let displaysItem = NSMenuItem(title: "Displays", action: nil, keyEquivalent: "")
-        displaysItem.image = NSImage(systemSymbolName: "display.2", accessibilityDescription: nil)
-        displaysItem.submenu = displaysMenu
-        menu.addItem(displaysItem)
-
-        menu.addItem(NSMenuItem.separator())
-
-        // 5. Open App Window
+        // 4. Open LumaWall App Window
         let openItem = NSMenuItem(title: "Open Wallpaper Library…", action: #selector(openMainWindow), keyEquivalent: "o")
         openItem.image = NSImage(systemSymbolName: "sparkles.tv", accessibilityDescription: nil)
         openItem.target = self
@@ -129,7 +92,7 @@ public final class StatusItemManager: NSObject, NSMenuDelegate {
 
         menu.addItem(NSMenuItem.separator())
 
-        // 6. Quit
+        // 5. Quit
         let quitItem = NSMenuItem(title: "Quit LumaWall", action: #selector(quitApp), keyEquivalent: "q")
         quitItem.image = NSImage(systemSymbolName: "power", accessibilityDescription: nil)
         quitItem.target = self
@@ -138,32 +101,15 @@ public final class StatusItemManager: NSObject, NSMenuDelegate {
 
     // MARK: - Actions
 
-    @objc private func togglePlayPause() {
-        DisplayManager.shared.togglePlayPauseAll()
-    }
-
-    @objc private func toggleMute() {
-        let isMuted = DisplayManager.shared.isMuted
-        DisplayManager.shared.setMutedAll(!isMuted)
-    }
-
-    @objc private func stopWallpaper() {
-        WallpaperLibrary.shared.stopDesktop()
-    }
-
     @objc private func selectWallpaper(_ sender: NSMenuItem) {
         guard let id = sender.representedObject as? UUID else { return }
         WallpaperLibrary.shared.setAsDesktop(id: id)
     }
 
-    @objc private func setUnifiedMode() {
-        DisplayManager.shared.setDisplayMode(.unified)
-        WallpaperLibrary.shared.persist()
-    }
-
-    @objc private func setIndividualMode() {
-        DisplayManager.shared.setDisplayMode(.individual)
-        WallpaperLibrary.shared.persist()
+    @objc private func openSystemWallpaperSettings() {
+        if let url = URL(string: "x-apple.systempreferences:com.apple.Wallpaper-Settings.extension") {
+            NSWorkspace.shared.open(url)
+        }
     }
 
     @objc private func openMainWindow() {
