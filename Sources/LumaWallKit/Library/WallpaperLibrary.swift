@@ -73,7 +73,6 @@ public final class WallpaperLibrary {
 
             self.wallpapers = loadedItems
             self.activeDesktopWallpaperId = data.activeWallpaperId
-            DisplayManager.shared.settings = data.displaySettings
 
             if selectedWallpaperId == nil, let first = wallpapers.first {
                 selectedWallpaperId = first.id

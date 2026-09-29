@@ -87,7 +87,7 @@ LumaWall combines low-level AppKit windowing with modern SwiftUI and AVFoundatio
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
-For comprehensive technical specifications, see [ARCHITECTURE.md](file:///Users/shrinivaspatil/Desktop/Wallpaper/Wallpaper/ARCHITECTURE.md) and [PERFORMANCE.md](file:///Users/shrinivaspatil/Desktop/Wallpaper/Wallpaper/PERFORMANCE.md).
+For comprehensive technical specifications, see [ARCHITECTURE.md](ARCHITECTURE.md) and [PERFORMANCE.md](PERFORMANCE.md).
 
 ---
 

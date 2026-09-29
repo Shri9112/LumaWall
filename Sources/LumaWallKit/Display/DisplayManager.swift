@@ -19,6 +19,9 @@ public final class DisplayManager {
     private var screenChangeObserver: (any NSObjectProtocol)?
 
     public init() {
+        if let data = try? LibraryStore().load() {
+            self.settings = data.displaySettings
+        }
         refreshDisplays()
         setupScreenChangeObserver()
     }
@@ -39,6 +42,7 @@ public final class DisplayManager {
         wallpaperCache[item.id] = item
         settings.mode = .unified
         settings.unifiedWallpaperId = item.id
+        updateEngineState()
 
         Task { @MainActor in
             do {
@@ -58,6 +62,7 @@ public final class DisplayManager {
         wallpaperCache[item.id] = item
         settings.mode = .individual
         settings.assignments[displayID] = item.id
+        updateEngineState()
 
         Task { @MainActor in
             do {
@@ -144,7 +149,7 @@ public final class DisplayManager {
     }
 
     public func isDisplayActive(_ displayID: CGDirectDisplayID) -> Bool {
-        controllers[displayID] != nil
+        activeWallpaperId(for: displayID) != nil
     }
 
     // MARK: - Internal Reconciliation
@@ -198,8 +203,8 @@ public final class DisplayManager {
     }
 
     private func updateEngineState() {
-        isAnyDisplayActive = !controllers.isEmpty
-        isPlaying = isAnyDisplayActive && (controllers.values.first?.player.isPlaying ?? false)
+        isAnyDisplayActive = (settings.mode == .unified && settings.unifiedWallpaperId != nil) || (settings.mode == .individual && !settings.assignments.isEmpty)
+        isPlaying = isAnyDisplayActive
     }
 
     // MARK: - Screen Change Notifications
