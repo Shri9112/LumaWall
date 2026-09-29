@@ -91,6 +91,18 @@ For comprehensive technical specifications, see [ARCHITECTURE.md](ARCHITECTURE.m
 
 ---
 
+## 🛠️ Engineering Journey & Architecture Evolution
+
+Building a live wallpaper application on modern macOS (Sonoma, Sequoia, and macOS 26) presents unique challenges due to macOS's strict WindowServer boundaries, App Sandbox, and the Lock Screen compositor.
+
+LumaWall originally began using the traditional `NSWindow.Level.belowDesktop` floating window overlay hack. Through testing and user feedback, we discovered that floating windows cannot exist on the Lock Screen, resulting in frozen videos and desktop-lock screen desynchronization. 
+
+We completely re-architected LumaWall by reverse-engineering Apple's internal `com.apple.wallpaper-extension` pipeline, enabling true native live motion under Finder and across the Lock Screen with zero overlay windows.
+
+👉 **Read the full engineering deep-dive**: [ARCHITECTURE_EVOLUTION.md](ARCHITECTURE_EVOLUTION.md) — includes detailed postmortems on solving the Apple Settings `brk #0x1` trap, APFS zero-copy clones, and eliminating legacy menu bar clutter.
+
+---
+
 ## Installation & Building from Source
 
 ### Prerequisites
